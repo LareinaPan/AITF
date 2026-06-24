@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment (keep *.example templates)
+.env
+.env.local
+.env.*.local
+.env.example
+.env.development
+
+# Node
+node_modules/
+dist/
+*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Runtime storage (keep directory structure via .gitkeep)
+storage/allure-results/*
+!storage/allure-results/.gitkeep
+storage/allure-reports/*
+!storage/allure-reports/.gitkeep
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/*.db
+*.db
+
+# OS
+.DS_Store
+
+# create-docs
+.cursor/
+architecture.md
+tasks.md
+PRD.md
+docs
+
