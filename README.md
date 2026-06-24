@@ -154,8 +154,6 @@ AITF/
 │   └── tests/         # pytest 单元测试
 ├── storage/           # 运行时数据（DB、报告、上传，gitignore）
 ├── docker-compose.yml
-├── architecture.md    # 架构设计
-└── tasks.md           # 任务清单
 ```
 
 ## 常见问题
@@ -171,9 +169,3 @@ A: 本地需安装 Allure CLI 并配置 `ALLURE_CLI`；Docker 镜像已内置。
 
 **Q: 用例执行请求不到 localhost 上的被测服务？**  
 A: Docker 后端运行时，环境变量中设置 `RUNNER_HOST_ALIAS=host.docker.internal`。
-
-## 文档
-
-- [architecture.md](./architecture.md) — 架构设计
-- [tasks.md](./tasks.md) — MVP 任务与验收清单
-- [docs/demo/DEMO_CHECKLIST.md](./docs/demo/DEMO_CHECKLIST.md) — Demo 端到端验收清单
