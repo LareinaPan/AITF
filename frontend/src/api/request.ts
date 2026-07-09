@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, isAxiosError } from 'axios'
+import { FormUploadError } from '@/api/form-upload'
 import { clearStoredToken, getStoredToken } from '@/utils/auth-storage'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
@@ -24,6 +25,13 @@ request.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  if (config.data instanceof FormData) {
+    if (typeof config.headers.delete === 'function') {
+      config.headers.delete('Content-Type')
+    } else {
+      delete config.headers['Content-Type']
+    }
+  }
   return config
 })
 
@@ -43,6 +51,14 @@ request.interceptors.response.use(
 )
 
 export function getApiErrorMessage(error: unknown, fallback = '请求失败，请稍后重试'): string {
+  if (error instanceof FormUploadError) {
+    return error.message
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+
   if (!isAxiosError(error)) {
     return fallback
   }

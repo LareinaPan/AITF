@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models.test_plan import TestPlan
+from app.scheduler.pt_run_cleanup_jobs import register_pt_run_cleanup_job
 from app.scheduler.report_cleanup_jobs import register_report_cleanup_job
 from app.services.cron_validator import build_plan_cron_trigger
 from app.services.plan_execution_service import execute_test_plan
@@ -74,5 +75,6 @@ def start_plan_scheduler() -> BackgroundScheduler:
     with session_factory() as session:
         sync_plan_scheduler_jobs(scheduler, session)
     register_report_cleanup_job(scheduler)
+    register_pt_run_cleanup_job(scheduler)
     scheduler.start()
     return scheduler

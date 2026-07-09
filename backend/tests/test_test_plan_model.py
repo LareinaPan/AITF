@@ -44,6 +44,7 @@ def test_test_plan_tables_created_by_migration(migrated_db: str) -> None:
         "cron_expression",
         "environment_id",
         "is_enabled",
+        "notify_on_complete",
         "created_at",
     }
 

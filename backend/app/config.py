@@ -52,12 +52,28 @@ class Settings(BaseSettings):
     openai_base_url: str = "https://api.openai.com/v1"
     ai_model: str = "gpt-4o-mini"
     ai_fallback_model: str = "gpt-4o-mini"
+    ai_fc_model: str = ""
+    ai_fc_fallback_model: str = ""
     ai_request_timeout_seconds: float = 60.0
     report_base_url: str = "http://localhost:8000/reports"
     report_retention_days: int = 30
     allure_cli: str = "allure"
     feishu_webhook_timeout_seconds: float = 10.0
     scheduler_timezone: str = "Asia/Shanghai"
+    fc_max_doc_size_mb: int = 10
+    fc_max_docs_per_project: int = 20
+    fc_coverage_threshold: float = 80.0
+    fc_max_internal_retry: int = 3
+    fc_max_cases_per_batch: int = 200
+    pt_max_jmx_size_mb: int = 10
+    pt_max_samplers_per_script: int = 50
+    pt_max_concurrency: int = 1000
+    pt_request_timeout_seconds: float = 30.0
+    pt_metrics_flush_interval_seconds: int = 3
+    pt_error_log_max_per_flush: int = 5
+    pt_error_log_max_per_run: int = 500
+    pt_run_retention_days: int = 30
+    pt_default_max_requests: int = 1000
 
     @field_validator("database_url", mode="before")
     @classmethod

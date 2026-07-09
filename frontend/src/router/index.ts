@@ -16,6 +16,22 @@ import ProjectPlanDetailView from '@/views/projects/ProjectPlanDetailView.vue'
 import ProjectSettingsTab from '@/views/projects/tabs/ProjectSettingsTab.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import EnvironmentView from '@/views/environments/EnvironmentView.vue'
+import FcProjectDetailView from '@/views/fc-projects/FcProjectDetailView.vue'
+import FcProjectListView from '@/views/fc-projects/FcProjectListView.vue'
+import FcCasesTab from '@/views/fc-projects/tabs/FcCasesTab.vue'
+import FcExperienceCasesTab from '@/views/fc-projects/tabs/FcExperienceCasesTab.vue'
+import FcGenerateTab from '@/views/fc-projects/tabs/FcGenerateTab.vue'
+import FcHistoryTab from '@/views/fc-projects/tabs/FcHistoryTab.vue'
+import FcOverviewTab from '@/views/fc-projects/tabs/FcOverviewTab.vue'
+import FcRequirementDocsTab from '@/views/fc-projects/tabs/FcRequirementDocsTab.vue'
+import FcReviewTab from '@/views/fc-projects/tabs/FcReviewTab.vue'
+import PtProjectDetailView from '@/views/pt-projects/PtProjectDetailView.vue'
+import PtProjectListView from '@/views/pt-projects/PtProjectListView.vue'
+import PtOverviewTab from '@/views/pt-projects/tabs/PtOverviewTab.vue'
+import PtRunsTab from '@/views/pt-projects/tabs/PtRunsTab.vue'
+import PtScenariosTab from '@/views/pt-projects/tabs/PtScenariosTab.vue'
+import PtScenarioScriptView from '@/views/pt-projects/PtScenarioScriptView.vue'
+import PtRunDetailView from '@/views/pt-projects/PtRunDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -51,6 +67,88 @@ const router = createRouter({
           path: 'environments',
           name: 'environments',
           component: EnvironmentView,
+        },
+        {
+          path: 'fc-projects',
+          name: 'fc-projects',
+          component: FcProjectListView,
+        },
+        {
+          path: 'fc-projects/:id',
+          component: FcProjectDetailView,
+          children: [
+            {
+              path: '',
+              name: 'fc-project-overview',
+              component: FcOverviewTab,
+            },
+            {
+              path: 'docs',
+              name: 'fc-project-docs',
+              component: FcRequirementDocsTab,
+            },
+            {
+              path: 'experience',
+              name: 'fc-project-experience',
+              component: FcExperienceCasesTab,
+            },
+            {
+              path: 'generate',
+              name: 'fc-project-generate',
+              component: FcGenerateTab,
+            },
+            {
+              path: 'review',
+              name: 'fc-project-review',
+              component: FcReviewTab,
+            },
+            {
+              path: 'cases',
+              name: 'fc-project-cases',
+              component: FcCasesTab,
+            },
+            {
+              path: 'history',
+              name: 'fc-project-history',
+              component: FcHistoryTab,
+            },
+          ],
+        },
+        {
+          path: 'pt-projects',
+          name: 'pt-projects',
+          component: PtProjectListView,
+        },
+        {
+          path: 'pt-projects/:id/runs/:runId',
+          name: 'pt-project-run-detail',
+          component: PtRunDetailView,
+        },
+        {
+          path: 'pt-projects/:id/scenarios/:scenarioId/script',
+          name: 'pt-scenario-script',
+          component: PtScenarioScriptView,
+        },
+        {
+          path: 'pt-projects/:id',
+          component: PtProjectDetailView,
+          children: [
+            {
+              path: '',
+              name: 'pt-project-overview',
+              component: PtOverviewTab,
+            },
+            {
+              path: 'scenarios',
+              name: 'pt-project-scenarios',
+              component: PtScenariosTab,
+            },
+            {
+              path: 'runs',
+              name: 'pt-project-runs',
+              component: PtRunsTab,
+            },
+          ],
         },
         {
           path: 'projects/:id',

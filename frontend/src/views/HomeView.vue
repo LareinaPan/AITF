@@ -32,18 +32,20 @@ const modules: ModuleEntry[] = [
   {
     key: 'functional-case',
     title: '功能用例生成',
-    description: '基于需求文档与页面结构，AI 辅助生成功能测试用例',
-    tag: '构建中',
-    tagType: 'warning',
-    available: false,
+    description: '基于需求文档，AI 辅助生成功能测试用例',
+    tag: '已上线',
+    tagType: 'success',
+    available: true,
+    route: '/fc-projects',
   },
   {
     key: 'performance-test',
     title: '性能测试',
     description: '配置压测场景，执行性能基准测试并查看分析报告',
-    tag: '构建中',
-    tagType: 'warning',
-    available: false,
+    tag: '已上线',
+    tagType: 'success',
+    available: true,
+    route: '/pt-projects',
   },
 ]
 

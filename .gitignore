@@ -19,6 +19,7 @@ htmlcov/
 node_modules/
 dist/
 *.local
+*.tsbuildinfo
 
 # IDE
 .idea/
@@ -32,16 +33,23 @@ storage/allure-reports/*
 !storage/allure-reports/.gitkeep
 storage/uploads/*
 !storage/uploads/.gitkeep
+storage/fc-uploads/*
+!storage/fc-uploads/.gitkeep
+storage/pt-uploads/*
+!storage/pt-uploads/.gitkeep
 storage/*.db
+storage/*.db-wal
+storage/*.db-shm
+storage/*.log
 *.db
+*.log
 
 # OS
 .DS_Store
 
 # create-docs
 .cursor/
-architecture.md
-tasks.md
-PRD.md
+
 docs
 
+thePlatform

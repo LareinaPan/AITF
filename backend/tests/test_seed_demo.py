@@ -10,14 +10,20 @@ from app.core.security import verify_password
 from app.models.api_endpoint import ApiEndpoint
 from app.models.environment import Environment, EnvironmentVariable
 from app.models.project import Project
+from app.models.pt_project import PtProject
+from app.models.pt_scenario import PtScenario
+from app.models.pt_script import PtScript, PtScriptParseStatus
 from app.models.test_case import TestCase
 from app.models.test_plan import TestPlan
 from app.models.user import User
 from app.services.demo_seed_service import (
     DEMO_ENV_NAME,
+    DEMO_JMX_PATH,
     DEMO_OPENAPI_PATH,
     DEMO_PASSWORD,
     DEMO_PROJECT_NAME,
+    DEMO_PT_PROJECT_NAME,
+    DEMO_PT_SCENARIO_NAME,
     DEMO_USERNAME,
     seed_demo_data,
 )
@@ -53,12 +59,18 @@ def test_demo_openapi_file_exists() -> None:
     assert DEMO_OPENAPI_PATH.is_file()
 
 
+def test_demo_jmx_file_exists() -> None:
+    assert DEMO_JMX_PATH.is_file()
+
+
 def test_seed_demo_data_is_idempotent(seed_db: sessionmaker) -> None:
     with seed_db() as session:
         first = seed_demo_data(session)
         assert first.endpoints_created == 4
         assert first.test_cases_created == 2
         assert first.test_plans_created == 1
+        assert first.pt_scenarios_created == 1
+        assert first.pt_jmx_seeded == 1
 
     with seed_db() as session:
         second = seed_demo_data(session)
@@ -66,12 +78,32 @@ def test_seed_demo_data_is_idempotent(seed_db: sessionmaker) -> None:
         assert second.endpoints_updated == 4
         assert second.test_cases_created == 0
         assert second.test_plans_created == 0
+        assert second.pt_scenarios_created == 0
+        assert second.pt_jmx_seeded == 0
 
         user = session.scalar(select(User).where(User.username == DEMO_USERNAME))
         assert user is not None
 
         project = session.scalar(select(Project).where(Project.name == DEMO_PROJECT_NAME))
         assert project is not None
+
+        pt_project = session.scalar(select(PtProject).where(PtProject.name == DEMO_PT_PROJECT_NAME))
+        assert pt_project is not None
+
+        scenario = session.scalar(
+            select(PtScenario).where(
+                PtScenario.pt_project_id == pt_project.id,
+                PtScenario.name == DEMO_PT_SCENARIO_NAME,
+            ),
+        )
+        assert scenario is not None
+
+        script = session.scalar(select(PtScript).where(PtScript.pt_scenario_id == scenario.id))
+        assert script is not None
+        assert script.parse_status == PtScriptParseStatus.SUCCESS.value
+        assert script.duration_seconds == 30
+        assert script.parsed_plan_json is not None
+        assert len(script.parsed_plan_json.get("samplers", [])) == 3
 
         endpoint_count = session.scalar(
             select(func.count()).select_from(ApiEndpoint).where(ApiEndpoint.project_id == project.id),

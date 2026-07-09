@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 def ensure_storage_dirs() -> None:
     ALLURE_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     ALLURE_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    (STORAGE_DIR / "fc-uploads").mkdir(parents=True, exist_ok=True)
+    (STORAGE_DIR / "pt-uploads").mkdir(parents=True, exist_ok=True)
 
 
 def get_results_dir(run_id: uuid.UUID) -> Path:

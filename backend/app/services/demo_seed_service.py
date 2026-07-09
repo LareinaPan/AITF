@@ -5,26 +5,35 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.config import PROJECT_ROOT
 from app.core.security import hash_password
 from app.models.api_endpoint import ApiEndpoint
 from app.models.environment import Environment, EnvironmentVariable
 from app.models.project import Project
+from app.models.pt_project import PtProject
+from app.models.pt_scenario import PtScenario
+from app.models.pt_script import PtScript, PtScriptParseStatus, PtScriptStopMode
 from app.models.test_case import TestCase
 from app.models.test_plan import PlanCase, TestPlan
 from app.models.user import User
 from app.services.api_endpoint_service import upsert_parsed_endpoints
 from app.services.openapi_parser import parse_openapi_document
+from app.services.pt_jmx_parser import parse_jmx_content, save_pt_jmx_upload
 
 DEMO_OPENAPI_PATH = PROJECT_ROOT / "docs" / "demo" / "demo-openapi.json"
+DEMO_JMX_PATH = PROJECT_ROOT / "docs" / "demo" / "demo-load-test.jmx"
 DEMO_USERNAME = "demo"
 DEMO_PASSWORD = "Demo123456"
 DEMO_PROJECT_NAME = "Demo 商城 API"
+DEMO_PT_PROJECT_NAME = "Demo 压测项目"
+DEMO_PT_SCENARIO_NAME = "JSONPlaceholder Demo"
+DEMO_JMX_FILENAME = "demo-load-test.jmx"
 DEMO_ENV_NAME = "dev"
 
 
@@ -37,6 +46,9 @@ class SeedDemoSummary:
     endpoints_updated: int
     test_cases_created: int
     test_plans_created: int
+    pt_project_id: uuid.UUID
+    pt_scenarios_created: int
+    pt_jmx_seeded: int
 
 
 def load_demo_openapi_document() -> dict[str, Any]:
@@ -228,6 +240,89 @@ def seed_demo_test_plan(session: Session, project_id: uuid.UUID, environment_id:
     return 1
 
 
+def get_or_create_demo_pt_project(session: Session, user: User) -> PtProject:
+    project = session.scalar(select(PtProject).where(PtProject.name == DEMO_PT_PROJECT_NAME))
+    if project is not None:
+        return project
+
+    project = PtProject(
+        name=DEMO_PT_PROJECT_NAME,
+        description="AITF Demo 压测项目，含 jsonplaceholder 示例 JMX 与默认压测配置",
+        created_by=user.id,
+    )
+    session.add(project)
+    session.flush()
+    return project
+
+
+def _get_demo_pt_scenario(session: Session, project_id: uuid.UUID) -> PtScenario | None:
+    return session.scalar(
+        select(PtScenario)
+        .where(
+            PtScenario.pt_project_id == project_id,
+            PtScenario.name == DEMO_PT_SCENARIO_NAME,
+        )
+        .options(selectinload(PtScenario.script)),
+    )
+
+
+def seed_demo_pt_scenario(session: Session, project_id: uuid.UUID) -> int:
+    if _get_demo_pt_scenario(session, project_id) is not None:
+        return 0
+
+    scenario = PtScenario(
+        pt_project_id=project_id,
+        name=DEMO_PT_SCENARIO_NAME,
+        description="Demo：对 jsonplaceholder.typicode.com 三个 GET/POST 接口发压",
+    )
+    scenario.script = PtScript(
+        parse_status=PtScriptParseStatus.PENDING.value,
+        stop_mode=PtScriptStopMode.DURATION.value,
+        max_concurrency=10,
+        ramp_up_seconds=5,
+        duration_seconds=30,
+    )
+    session.add(scenario)
+    session.flush()
+    return 1
+
+
+def seed_demo_pt_jmx(session: Session, project_id: uuid.UUID) -> int:
+    scenario = _get_demo_pt_scenario(session, project_id)
+    if scenario is None or scenario.script is None:
+        return 0
+
+    script = scenario.script
+    if (
+        script.parse_status == PtScriptParseStatus.SUCCESS.value
+        and script.filename == DEMO_JMX_FILENAME
+        and script.file_path
+    ):
+        return 0
+
+    content = DEMO_JMX_PATH.read_bytes()
+    parsed_plan = parse_jmx_content(content)
+    saved_path, file_size = save_pt_jmx_upload(
+        pt_project_id=project_id,
+        filename=DEMO_JMX_FILENAME,
+        content=content,
+    )
+
+    script.filename = DEMO_JMX_FILENAME
+    script.file_path = str(saved_path)
+    script.file_size = file_size
+    script.parse_status = PtScriptParseStatus.SUCCESS.value
+    script.parse_error = None
+    script.parsed_plan_json = parsed_plan.to_json()
+    script.max_concurrency = 10
+    script.ramp_up_seconds = 5
+    script.stop_mode = PtScriptStopMode.DURATION.value
+    script.duration_seconds = 30
+    script.uploaded_at = datetime.now(timezone.utc)
+    session.flush()
+    return 1
+
+
 def seed_demo_data(session: Session) -> SeedDemoSummary:
     user = get_or_create_demo_user(session)
     environment = get_or_create_dev_environment(session)
@@ -235,6 +330,9 @@ def seed_demo_data(session: Session) -> SeedDemoSummary:
     created, updated = seed_demo_endpoints(session, project.id)
     test_cases_created = seed_demo_test_cases(session, project.id)
     test_plans_created = seed_demo_test_plan(session, project.id, environment.id)
+    pt_project = get_or_create_demo_pt_project(session, user)
+    pt_scenarios_created = seed_demo_pt_scenario(session, pt_project.id)
+    pt_jmx_seeded = seed_demo_pt_jmx(session, pt_project.id)
     session.commit()
 
     return SeedDemoSummary(
@@ -245,4 +343,7 @@ def seed_demo_data(session: Session) -> SeedDemoSummary:
         endpoints_updated=updated,
         test_cases_created=test_cases_created,
         test_plans_created=test_plans_created,
+        pt_project_id=pt_project.id,
+        pt_scenarios_created=pt_scenarios_created,
+        pt_jmx_seeded=pt_jmx_seeded,
     )

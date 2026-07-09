@@ -13,6 +13,12 @@ const activeMenu = computed(() => {
   if (route.path.startsWith('/projects')) {
     return '/projects'
   }
+  if (route.path.startsWith('/fc-projects')) {
+    return '/fc-projects'
+  }
+  if (route.path.startsWith('/pt-projects')) {
+    return '/pt-projects'
+  }
   if (route.path.startsWith('/environments')) {
     return '/environments'
   }
@@ -40,6 +46,8 @@ async function handleLogout(): Promise<void> {
       >
         <el-menu-item index="/">首页</el-menu-item>
         <el-menu-item index="/projects">接口项目</el-menu-item>
+        <el-menu-item index="/fc-projects">功能项目</el-menu-item>
+        <el-menu-item index="/pt-projects">压测项目</el-menu-item>
         <el-menu-item index="/environments">环境变量</el-menu-item>
       </el-menu>
 
