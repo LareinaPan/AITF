@@ -196,6 +196,7 @@ async def import_experience_cases(
             expected_result=row.expected_result,
             priority=row.priority,
             case_type=row.case_type,
+            tags=row.tags,
         )
         db.add(case)
         created_cases.append(case)

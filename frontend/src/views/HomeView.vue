@@ -47,6 +47,30 @@ const modules: ModuleEntry[] = [
     available: true,
     route: '/pt-projects',
   },
+  {
+    key: 'ui-test',
+    title: 'UI测试',
+    description: '可视化录制与回放，覆盖端到端 UI 自动化场景',
+    tag: '未上线',
+    tagType: 'info',
+    available: false,
+  },
+  {
+    key: 'ai-test',
+    title: 'AI测试',
+    description: '智能探索、断言推荐与缺陷定位，提升测试效率',
+    tag: '未上线',
+    tagType: 'info',
+    available: false,
+  },
+  {
+    key: 'data-factory',
+    title: '造数工具',
+    description: '按规则批量构造测试数据，支撑联调与回归准备',
+    tag: '未上线',
+    tagType: 'info',
+    available: false,
+  },
 ]
 
 function handleModuleClick(module: ModuleEntry): void {
@@ -54,7 +78,7 @@ function handleModuleClick(module: ModuleEntry): void {
     void router.push(module.route)
     return
   }
-  ElMessage.info('还在构建中')
+  ElMessage.info('构建中，敬请期待')
 }
 </script>
 

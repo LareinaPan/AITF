@@ -15,6 +15,9 @@ TEMPLATE_HEADERS = (
     "用例类型",
 )
 
+# Experience-case import extends the shared template with an optional tags column.
+EXPERIENCE_IMPORT_HEADERS = TEMPLATE_HEADERS + ("标签",)
+
 CASE_TYPE_ALIASES: dict[str, str] = {
     "positive": "positive",
     "正向": "positive",
@@ -48,6 +51,7 @@ class ParsedExperienceCaseRow:
     expected_result: str
     priority: str
     case_type: str
+    tags: str | None = None
 
 
 @dataclass(frozen=True)
@@ -103,17 +107,26 @@ def parse_experience_case_excel(content: bytes) -> ExperienceImportResult:
             "Excel 表头不符合模板，请使用标准模板（用例编号、功能模块、用例标题…）"
         )
 
+    has_tags_column = (
+        len(header_row) >= len(EXPERIENCE_IMPORT_HEADERS)
+        and header_row[len(TEMPLATE_HEADERS)] == "标签"
+    )
+    column_count = len(EXPERIENCE_IMPORT_HEADERS) if has_tags_column else len(TEMPLATE_HEADERS)
+
     valid_rows: list[ParsedExperienceCaseRow] = []
     errors: list[str] = []
 
     for index, row in enumerate(rows[1:], start=2):
-        cells = list(row) + [None] * (len(TEMPLATE_HEADERS) - len(row))
-        values = [_cell_value(cell) for cell in cells[: len(TEMPLATE_HEADERS)]]
+        cells = list(row) + [None] * (column_count - len(row))
+        values = [_cell_value(cell) for cell in cells[:column_count]]
 
         if all(value is None for value in values):
             continue
 
-        case_no, module, title, preconditions, steps, expected_result, priority_raw, case_type_raw = values
+        case_no, module, title, preconditions, steps, expected_result, priority_raw, case_type_raw = (
+            values[: len(TEMPLATE_HEADERS)]
+        )
+        tags = values[len(TEMPLATE_HEADERS)] if has_tags_column else None
 
         if not module or not title or not steps or not expected_result:
             errors.append(f"第 {index} 行缺少必填字段（功能模块/用例标题/测试步骤/预期结果）")
@@ -137,6 +150,7 @@ def parse_experience_case_excel(content: bytes) -> ExperienceImportResult:
                 expected_result=expected_result,
                 priority=priority,
                 case_type=case_type,
+                tags=tags,
             )
         )
 

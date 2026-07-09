@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from openpyxl import Workbook
 
-from app.services.fc_experience_importer import TEMPLATE_HEADERS
+from app.services.fc_experience_importer import EXPERIENCE_IMPORT_HEADERS, TEMPLATE_HEADERS
 
 
 def _create_fc_project(client: TestClient, auth_headers: dict[str, str]) -> str:
@@ -17,10 +17,10 @@ def _create_fc_project(client: TestClient, auth_headers: dict[str, str]) -> str:
     return response.json()["id"]
 
 
-def _build_xlsx(rows: list[tuple]) -> bytes:
+def _build_xlsx(rows: list[tuple], *, headers: tuple[str, ...] = TEMPLATE_HEADERS) -> bytes:
     workbook = Workbook()
     sheet = workbook.active
-    sheet.append(list(TEMPLATE_HEADERS))
+    sheet.append(list(headers))
     for row in rows:
         sheet.append(list(row))
     buffer = BytesIO()
@@ -75,12 +75,13 @@ def test_import_experience_cases(client: TestClient, auth_headers: dict[str, str
 
     xlsx = _build_xlsx(
         [
-            ("EXP-101", "订单", "创建订单", None, "1. 提交订单", "创建成功", "P1", "正向"),
-            ("EXP-102", "订单", "取消订单", None, "1. 点击取消", "订单取消", "P2", "异常"),
-            ("EXP-103", "支付", "支付超时", None, "1. 等待超时", "提示超时", "P1", "边界"),
-            ("EXP-104", "权限", "无权限访问", None, "1. 访问页面", "403", "P0", "权限"),
-            ("EXP-105", "安全", "SQL 注入", None, "1. 输入特殊字符", "被拦截", "P0", "安全"),
-        ]
+            ("EXP-101", "订单", "创建订单", None, "1. 提交订单", "创建成功", "P1", "正向", "订单,冒烟"),
+            ("EXP-102", "订单", "取消订单", None, "1. 点击取消", "订单取消", "P2", "异常", None),
+            ("EXP-103", "支付", "支付超时", None, "1. 等待超时", "提示超时", "P1", "边界", "支付"),
+            ("EXP-104", "权限", "无权限访问", None, "1. 访问页面", "403", "P0", "权限", "权限"),
+            ("EXP-105", "安全", "SQL 注入", None, "1. 输入特殊字符", "被拦截", "P0", "安全", "安全"),
+        ],
+        headers=EXPERIENCE_IMPORT_HEADERS,
     )
 
     response = client.post(
@@ -99,6 +100,9 @@ def test_import_experience_cases(client: TestClient, auth_headers: dict[str, str
     assert payload["imported_count"] == 5
     assert payload["rejected_count"] == 0
     assert len(payload["cases"]) == 5
+    assert payload["cases"][0]["tags"] == "订单,冒烟"
+    assert payload["cases"][1]["tags"] is None
+    assert payload["cases"][2]["tags"] == "支付"
 
 
 def test_experience_case_list_pagination(client: TestClient, auth_headers: dict[str, str]) -> None:

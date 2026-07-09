@@ -300,9 +300,12 @@ async def cancel_pt_run(
     try:
         await cancel_load_test(run_id)
     except PtRunNotRunningError:
-        run.status = PtRunStatus.CANCELLED.value
-        run.stop_reason = PtRunStopReason.MANUAL_CANCEL.value
-        run.ended_at = datetime.now(timezone.utc)
-        db.commit()
+        # Engine already gone (e.g. process restart); still mark the DB row cancelled.
+        pass
+
+    run.status = PtRunStatus.CANCELLED.value
+    run.stop_reason = PtRunStopReason.MANUAL_CANCEL.value
+    run.ended_at = datetime.now(timezone.utc)
+    db.commit()
 
     return PtRunActionResponse(run_id=run.id, status=PtRunStatus.CANCELLED.value)

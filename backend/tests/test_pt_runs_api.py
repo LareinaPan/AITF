@@ -225,6 +225,50 @@ def test_cancel_pt_run_success(
     assert response.json()["status"] == "cancelled"
     assert response.json()["run_id"] == run_id
 
+    from app.database import SessionLocal
+    from app.models.pt_run import PtRun, PtRunStatus, PtRunStopReason
+
+    with SessionLocal() as db:
+        run = db.get(PtRun, uuid.UUID(run_id))
+        assert run is not None
+        assert run.status == PtRunStatus.CANCELLED.value
+        assert run.stop_reason == PtRunStopReason.MANUAL_CANCEL.value
+        assert run.ended_at is not None
+
+
+@patch("app.api.pt_runs.cancel_load_test", new_callable=AsyncMock)
+def test_cancel_pt_run_persists_when_engine_already_gone(
+    mock_cancel_load_test,
+    client: TestClient,
+    auth_headers: dict[str, str],
+) -> None:
+    from app.services.pt_run_orchestrator import PtRunNotRunningError
+
+    mock_cancel_load_test.side_effect = PtRunNotRunningError("not active")
+    project_id, scenario_id = _prepare_runnable_scenario(client, auth_headers)
+
+    with patch("app.api.pt_runs.schedule_load_test"):
+        run_response = client.post(
+            f"/api/v1/pt-projects/{project_id}/scenarios/{scenario_id}/run",
+            headers=auth_headers,
+        )
+    run_id = run_response.json()["run_id"]
+
+    response = client.post(
+        f"/api/v1/pt-projects/{project_id}/runs/{run_id}/cancel",
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "cancelled"
+
+    from app.database import SessionLocal
+    from app.models.pt_run import PtRun, PtRunStatus
+
+    with SessionLocal() as db:
+        run = db.get(PtRun, uuid.UUID(run_id))
+        assert run is not None
+        assert run.status == PtRunStatus.CANCELLED.value
+
 
 def test_cancel_pt_run_conflict_when_not_running(
     client: TestClient,
